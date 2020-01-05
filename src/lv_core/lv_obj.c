@@ -121,6 +121,18 @@ void lv_init(void)
     LV_LOG_INFO("lv_init ready");
 }
 
+#if LV_ENABLE_GC || !LV_MEM_CUSTOM
+void lv_deinit(void)
+{
+    lv_gc_clear_roots();
+    lv_log_register_print_cb(NULL);
+    lv_disp_set_default(NULL);
+    lv_mem_deinit();
+    lv_initialized = false;
+    LV_LOG_INFO("lv_deinit done");
+}
+#endif
+
 /*--------------------
  * Create and delete
  *-------------------*/
@@ -1458,7 +1470,9 @@ lv_res_t lv_event_send(lv_obj_t * obj, lv_event_t event, const void * data)
  */
 lv_res_t lv_event_send_func(lv_event_cb_t event_xcb, lv_obj_t * obj, lv_event_t event, const void * data)
 {
-    LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+    if(obj != NULL) {
+        LV_ASSERT_OBJ(obj, LV_OBJX_NAME);
+    }
 
     /* Build a simple linked list from the objects used in the events
      * It's important to know if an this object was deleted by a nested event
