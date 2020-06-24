@@ -9,7 +9,7 @@
 #include "lv_label.h"
 #if LV_USE_LABEL != 0
 #include "../lv_core/lv_obj.h"
-#include "../lv_core/lv_debug.h"
+#include "../lv_misc/lv_debug.h"
 #include "../lv_core/lv_group.h"
 #include "../lv_draw/lv_draw.h"
 #include "../lv_misc/lv_color.h"
@@ -413,7 +413,7 @@ void lv_label_set_recolor(lv_obj_t * label, bool en)
 
     ext->recolor = en == false ? 0 : 1;
 
-    lv_label_refr_text(label); /*Refresh the text because the potential colo codes in text needs to
+    lv_label_refr_text(label); /*Refresh the text because the potential color codes in text needs to
                                   be hided or revealed*/
 }
 
@@ -572,10 +572,21 @@ void lv_label_get_letter_pos(const lv_obj_t * label, uint32_t char_id, lv_point_
     LV_ASSERT_NULL(pos);
 
     const char * txt         = lv_label_get_text(label);
+    lv_label_align_t align = lv_label_get_align(label);
 
     if(txt[0] == '\0') {
-        pos->x = 0;
         pos->y = 0;
+        switch(align) {
+        case LV_LABEL_ALIGN_LEFT:
+            pos->x = 0;
+            break;
+        case LV_LABEL_ALIGN_RIGHT:
+            pos->x = lv_obj_get_width(label);
+            break;
+        case LV_LABEL_ALIGN_CENTER:
+            pos->x = lv_obj_get_width(label) / 2;
+            break;
+        }
         return;
     }
 
@@ -597,7 +608,6 @@ void lv_label_get_letter_pos(const lv_obj_t * label, uint32_t char_id, lv_point_
     if(ext->expand != 0) flag |= LV_TXT_FLAG_EXPAND;
     if(ext->long_mode == LV_LABEL_LONG_EXPAND) flag |= LV_TXT_FLAG_FIT;
 
-    lv_label_align_t align = lv_label_get_align(label);
     if(align == LV_LABEL_ALIGN_CENTER) flag |= LV_TXT_FLAG_CENTER;
     if(align == LV_LABEL_ALIGN_RIGHT) flag |= LV_TXT_FLAG_RIGHT;
 
@@ -785,7 +795,8 @@ uint32_t lv_label_get_letter_on(const lv_obj_t * label, lv_point_t * pos)
     uint32_t cid = _lv_txt_encoded_get_char_id(bidi_txt, i);
     if(txt[line_start + cid] == '\0') {
         logical_pos = i;
-    } else {
+    }
+    else {
         bool is_rtl;
         logical_pos = _lv_bidi_get_logical_pos(&txt[line_start], NULL,
                                                txt_len, lv_obj_get_base_dir(label), cid, &is_rtl);
@@ -839,7 +850,7 @@ uint32_t lv_label_get_text_sel_end(const lv_obj_t * label)
 /**
  * Check if a character is drawn under a point.
  * @param label Label object
- * @param pos Point to check for characte under
+ * @param pos Point to check for character under
  * @return whether a character is drawn under the point
  */
 bool lv_label_is_char_under_pos(const lv_obj_t * label, lv_point_t * pos)
@@ -1080,8 +1091,8 @@ static lv_design_res_t lv_label_design(lv_obj_t * label, const lv_area_t * clip_
         label_draw_dsc.flag = flag;
         lv_obj_init_draw_label_dsc(label, LV_LABEL_PART_MAIN, &label_draw_dsc);
 
-        /* In SCROLl and SCROLL_CIRC mode the CENTER and RIGHT are pointless so remove them.
-         * (In addition they will result mis-alignment is this case)*/
+        /* In SCROLL and SCROLL_CIRC mode the CENTER and RIGHT are pointless so remove them.
+         * (In addition they will result misalignment is this case)*/
         if((ext->long_mode == LV_LABEL_LONG_SROLL || ext->long_mode == LV_LABEL_LONG_SROLL_CIRC) &&
            (ext->align == LV_LABEL_ALIGN_CENTER || ext->align == LV_LABEL_ALIGN_RIGHT)) {
             lv_point_t size;
